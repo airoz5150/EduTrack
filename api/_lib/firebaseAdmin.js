@@ -1,42 +1,44 @@
-// Verificación de tokens de Firebase en el backend (CommonJS para Vercel).
-// El frontend envía el ID Token (JWT) en el encabezado Authorization.
-const { getApps, initializeApp, cert } = require('firebase-admin/app')
-const { getAuth } = require('firebase-admin/auth')
+// Verificación del token (ID Token / JWT) de Firebase en el backend, SIN
+// firebase-admin (que arrastra 'jose' y rompe en Vercel). Validamos la firma
+// del token con las llaves públicas de Google. Solo se necesita el PROJECT_ID.
+const jwt = require('jsonwebtoken')
 
-let ready = false
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID
+const CERTS_URL =
+  'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com'
 
-// Inicializa firebase-admin la primera vez que se necesita (lazy).
-function ensureInit() {
-  if (ready) return
-  if (!getApps().length) {
-    const { FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY } =
-      process.env
-    if (!FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
-      throw new Error(
-        'Faltan credenciales del backend: define FIREBASE_CLIENT_EMAIL y FIREBASE_PRIVATE_KEY (cuenta de servicio de Firebase).',
-      )
-    }
-    initializeApp({
-      credential: cert({
-        projectId: FIREBASE_PROJECT_ID,
-        clientEmail: FIREBASE_CLIENT_EMAIL,
-        // Por si la clave llega con '\n' literal, los convertimos a saltos reales.
-        privateKey: FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      }),
-    })
-  }
-  ready = true
+// Caché de las llaves públicas de Google (se renuevan ~cada hora).
+let cache = { certs: null, exp: 0 }
+
+async function getCerts() {
+  const now = Date.now()
+  if (cache.certs && now < cache.exp) return cache.certs
+  const res = await fetch(CERTS_URL)
+  if (!res.ok) throw new Error('No se pudieron obtener las llaves públicas de Google')
+  const certs = await res.json()
+  cache = { certs, exp: now + 60 * 60 * 1000 }
+  return certs
 }
 
-// Devuelve el uid del usuario si el token es válido, o null si no lo es.
+// Devuelve el uid si el token es válido (firma + emisor + audiencia), o null.
 async function getUidFromRequest(req) {
-  ensureInit()
   const header = req.headers.authorization || ''
   const token = header.startsWith('Bearer ') ? header.slice(7) : null
   if (!token) return null
   try {
-    const decoded = await getAuth().verifyIdToken(token)
-    return decoded.uid
+    const decoded = jwt.decode(token, { complete: true })
+    if (!decoded || !decoded.header || !decoded.header.kid) return null
+
+    const certs = await getCerts()
+    const pem = certs[decoded.header.kid]
+    if (!pem) return null
+
+    const payload = jwt.verify(token, pem, {
+      algorithms: ['RS256'],
+      audience: PROJECT_ID,
+      issuer: `https://securetoken.google.com/${PROJECT_ID}`,
+    })
+    return payload.user_id || payload.sub || null
   } catch {
     return null
   }
