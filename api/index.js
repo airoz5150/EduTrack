@@ -1,12 +1,12 @@
-// Backend de EduTrack (API REST).
-// Funciona en local con `npm run server` y se despliega como función serverless
-// en Vercel. Autenticación: valida el token JWT de Firebase. Datos: MongoDB Atlas.
-import 'dotenv/config'
-import express from 'express'
-import cors from 'cors'
-import { connectDB } from './_lib/db.js'
-import { getUidFromRequest } from './_lib/firebaseAdmin.js'
-import { Activity, Subject } from './_lib/models.js'
+// Backend de EduTrack (API REST). CommonJS para que funcione como función
+// serverless en Vercel y en local con `npm run server`.
+// Autenticación: valida el token JWT de Firebase. Datos: MongoDB Atlas.
+require('dotenv').config()
+const express = require('express')
+const cors = require('cors')
+const { connectDB } = require('./_lib/db')
+const { getUidFromRequest } = require('./_lib/firebaseAdmin')
+const { Activity, Subject } = require('./_lib/models')
 
 const app = express()
 // CORS abierto: la autenticación es por token JWT en el encabezado (no cookies),
@@ -96,4 +96,4 @@ if (!process.env.VERCEL) {
   app.listen(PORT, () => console.log(`✅ API de EduTrack en http://localhost:${PORT}`))
 }
 
-export default app
+module.exports = app

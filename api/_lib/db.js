@@ -1,13 +1,13 @@
-// Conexión a MongoDB Atlas con caché (importante en entornos serverless:
-// reutiliza la conexión entre invocaciones en lugar de abrir una nueva cada vez).
-import mongoose from 'mongoose'
+// Conexión a MongoDB Atlas con caché (reutiliza la conexión entre invocaciones
+// en entornos serverless). CommonJS para compatibilidad con Vercel.
+const mongoose = require('mongoose')
 
 let cached = global._mongoose
 if (!cached) {
   cached = global._mongoose = { conn: null, promise: null }
 }
 
-export async function connectDB() {
+async function connectDB() {
   if (cached.conn) return cached.conn
 
   const uri = process.env.MONGODB_URI
@@ -22,3 +22,5 @@ export async function connectDB() {
   cached.conn = await cached.promise
   return cached.conn
 }
+
+module.exports = { connectDB }

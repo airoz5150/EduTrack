@@ -1,5 +1,5 @@
-// Modelos de datos (esquemas de Mongoose) para MongoDB Atlas.
-import mongoose from 'mongoose'
+// Modelos de datos (esquemas de Mongoose) para MongoDB Atlas. CommonJS.
+const mongoose = require('mongoose')
 
 // Opciones comunes: fechas automáticas y conversión a JSON con campo "id".
 const options = {
@@ -41,8 +41,9 @@ const subjectSchema = new mongoose.Schema(
   options,
 )
 
-// Evita recompilar el modelo si ya existe (en recargas en caliente / serverless).
-export const Activity =
+const Activity =
   mongoose.models.Activity || mongoose.model('Activity', activitySchema)
-export const Subject =
+const Subject =
   mongoose.models.Subject || mongoose.model('Subject', subjectSchema)
+
+module.exports = { Activity, Subject }
