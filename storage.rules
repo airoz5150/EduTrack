@@ -1,0 +1,14 @@
+// (No utilizado) Este proyecto NO usa Firebase Storage, porque ningún
+// requerimiento exige subir archivos y Storage requiere el plan de pago.
+//
+// Si en el futuro decides activar Storage, estas serían unas reglas seguras
+// (cada usuario solo accede a su carpeta):
+//
+// rules_version = '2';
+// service firebase.storage {
+//   match /b/{bucket}/o {
+//     match /users/{userId}/{allPaths=**} {
+//       allow read, write: if request.auth != null && request.auth.uid == userId;
+//     }
+//   }
+// }

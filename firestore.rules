@@ -1,0 +1,6 @@
+// (No utilizado) Este proyecto ya NO usa Cloud Firestore.
+// Los datos se guardan en MongoDB Atlas a través del backend (carpeta api/),
+// y la seguridad se aplica ahí: cada petición exige un token JWT válido de
+// Firebase y las consultas se filtran por el uid del usuario.
+//
+// Firebase se usa únicamente para Authentication.
