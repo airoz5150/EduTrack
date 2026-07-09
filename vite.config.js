@@ -10,4 +10,17 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Separa las librerías grandes en su propio archivo para que se descarguen
+        // en paralelo y se aprovechen mejor en la caché del navegador.
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return id.includes('firebase') ? 'firebase' : 'vendor'
+          }
+        },
+      },
+    },
+  },
 })

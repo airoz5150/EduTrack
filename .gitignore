@@ -17,6 +17,11 @@ dist-ssr
 .env.*
 !.env.example
 
+# Firma de la app Android (NO subir: son secretos de liberación)
+android/key.properties
+*.keystore
+*.jks
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
